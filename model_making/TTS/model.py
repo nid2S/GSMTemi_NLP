@@ -5,11 +5,10 @@ from torch.autograd import Variable
 from torch.nn import functional as F
 from hparams import hparams as hps
 
-# model = device change
 def get_mask_from_lengths(lengths, pad=False):
     max_len = torch.max(lengths).item()
     if pad and max_len % hps.n_frames_per_step != 0:
-        max_len += hps.n_frames_per_step - max_len%hps.n_frames_per_step
+        max_len += hps.n_frames_per_step - max_len % hps.n_frames_per_step
         assert max_len % hps.n_frames_per_step == 0
     ids = torch.arange(0, max_len, out=torch.LongTensor(max_len))
     ids = ids.to(hps.is_cuda)
@@ -37,13 +36,9 @@ class ConvNorm(torch.nn.Module):
             assert(kernel_size % 2 == 1)
             padding = int(dilation * (kernel_size - 1) / 2)
 
-        self.conv = torch.nn.Conv1d(in_channels, out_channels,
-                                    kernel_size=kernel_size, stride=stride,
-                                    padding=padding, dilation=dilation,
-                                    bias=bias)
-
-        torch.nn.init.xavier_uniform_(
-            self.conv.weight, gain=torch.nn.init.calculate_gain(w_init_gain))
+        self.conv = torch.nn.Conv1d(in_channels, out_channels, padding=padding, bias=bias,
+                                    kernel_size=(kernel_size,), stride=(stride,), dilation=(dilation,))
+        torch.nn.init.xavier_uniform_(self.conv.weight, gain=torch.nn.init.calculate_gain(w_init_gain))
 
     def forward(self, signal):
         conv_signal = self.conv(signal)
@@ -62,12 +57,11 @@ class Tacotron2Loss(nn.Module):
         mel_target.requires_grad = False
         gate_target.requires_grad = False
         output_lengths.requires_grad = False
-        slice = torch.arange(0, gate_target.size(1), hps.n_frames_per_step)
-        gate_target = gate_target[:, slice].view(-1, 1)
+        slice_arr = torch.arange(0, gate_target.size(1), hps.n_frames_per_step)
+        gate_target = gate_target[:, slice_arr].view(-1, 1)
         mel_mask = ~get_mask_from_lengths(output_lengths.data, True)
 
-        mel_loss = self.loss(mel_out, mel_target) + \
-                   self.loss(mel_out_postnet, mel_target)
+        mel_loss = self.loss(mel_out, mel_target) + self.loss(mel_out_postnet, mel_target)
         mel_loss = mel_loss.sum(1).masked_fill_(mel_mask, 0.) / mel_loss.size(1)
         mel_loss = mel_loss.sum() / output_lengths.sum()
 
@@ -76,14 +70,11 @@ class Tacotron2Loss(nn.Module):
 
 
 class LocationLayer(nn.Module):
-    def __init__(self, attention_n_filters, attention_kernel_size,
-                 attention_dim):
+    def __init__(self, attention_n_filters, attention_kernel_size, attention_dim):
         super(LocationLayer, self).__init__()
-        padding = int((attention_kernel_size - 1) / 2)
-        self.location_conv = ConvNorm(2, attention_n_filters,
-                                      kernel_size=attention_kernel_size,
-                                      padding=padding, bias=False, stride=1,
-                                      dilation=1)
+        padding = (attention_kernel_size - 1) // 2
+        self.location_conv = ConvNorm(2, attention_n_filters, padding=padding, bias=False,
+                                      kernel_size=attention_kernel_size, stride=1, dilation=1)
         self.location_dense = LinearNorm(attention_n_filters, attention_dim,
                                          bias=False, w_init_gain='tanh')
 
@@ -100,17 +91,16 @@ class Attention(nn.Module):
         super(Attention, self).__init__()
         self.query_layer = LinearNorm(attention_rnn_dim, attention_dim,
                                       bias=False, w_init_gain='tanh')
-        self.memory_layer = LinearNorm(embedding_dim, attention_dim, bias=False,
-                                       w_init_gain='tanh')
+        self.memory_layer = LinearNorm(embedding_dim, attention_dim,
+                                       bias=False, w_init_gain='tanh')
         self.v = LinearNorm(attention_dim, 1, bias=False)
         self.location_layer = LocationLayer(attention_location_n_filters,
                                             attention_location_kernel_size,
                                             attention_dim)
         self.score_mask_value = -float('inf')
 
-    def get_alignment_energies(self, query, processed_memory,
-                               attention_weights_cat):
-        '''
+    def get_alignment_energies(self, query, processed_memory, attention_weights_cat):
+        """
         PARAMS
         ------
         query: decoder output (batch, num_mels * n_frames_per_step)
@@ -120,7 +110,7 @@ class Attention(nn.Module):
         RETURNS
         -------
         alignment (batch, max_time)
-        '''
+        """
 
         processed_query = self.query_layer(query.unsqueeze(1))
         processed_attention_weights = self.location_layer(attention_weights_cat)
@@ -130,9 +120,8 @@ class Attention(nn.Module):
         energies = energies.squeeze(-1)
         return energies
 
-    def forward(self, attention_hidden_state, memory, processed_memory,
-                attention_weights_cat, mask):
-        '''
+    def forward(self, attention_hidden_state, memory, processed_memory, attention_weights_cat, mask):
+        """
         PARAMS
         ------
         attention_hidden_state: attention rnn last output
@@ -140,7 +129,7 @@ class Attention(nn.Module):
         processed_memory: processed encoder outputs
         attention_weights_cat: previous and cummulative attention weights
         mask: binary mask for padded data
-        '''
+        """
         alignment = self.get_alignment_energies(
             attention_hidden_state, processed_memory, attention_weights_cat)
 
@@ -168,9 +157,10 @@ class Prenet(nn.Module):
 
 
 class Postnet(nn.Module):
-    '''Postnet
+    """
+    Postnet
         - Five 1-d convolution with 512 channels and kernel size 5
-    '''
+    """
 
     def __init__(self):
         super(Postnet, self).__init__()
