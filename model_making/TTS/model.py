@@ -1,8 +1,13 @@
+import logging
 from math import sqrt
 import torch
 from torch.autograd import Variable
 from torch import nn
 from torch.nn import functional as F
+
+warn_logger = logging.getLogger("warn")
+warn_logger.setLevel(logging.WARNING)
+warn_logger.addHandler(logging.StreamHandler())
 
 def to_gpu(x):
     x = x.contiguous()
@@ -418,7 +423,7 @@ class Decoder(nn.Module):
             if torch.sigmoid(gate_output.data) > self.gate_threshold:
                 break
             elif len(mel_outputs) == self.max_decoder_steps:
-                print("Warning! Reached max decoder steps")
+                warn_logger.warning("Warning! Reached max decoder steps")
                 break
             decoder_input = mel_output
 
