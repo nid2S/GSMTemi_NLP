@@ -62,22 +62,17 @@ class Tacotron2Logger(SummaryWriter):
         idx = random.randint(0, alignments.size(0) - 1)
         self.add_image(
             "alignment",
-            plot_alignment_to_numpy(alignments[idx].data.cpu().numpy().T),
-            iteration, dataformats='HWC')
+            plot_alignment_to_numpy(alignments[idx].data.cpu().numpy().T), iteration, dataformats='HWC')
         self.add_image(
             "mel_target",
-            plot_spectrogram_to_numpy(mel_targets[idx].data.cpu().numpy()),
-            iteration, dataformats='HWC')
+            plot_spectrogram_to_numpy(mel_targets[idx].data.cpu().numpy()), iteration, dataformats='HWC')
         self.add_image(
             "mel_predicted",
-            plot_spectrogram_to_numpy(mel_outputs[idx].data.cpu().numpy()),
-            iteration, dataformats='HWC')
+            plot_spectrogram_to_numpy(mel_outputs[idx].data.cpu().numpy()), iteration, dataformats='HWC')
         self.add_image(
             "gate",
-            plot_gate_outputs_to_numpy(
-                gate_targets[idx].data.cpu().numpy(),
-                torch.sigmoid(gate_outputs[idx]).data.cpu().numpy()),
-            iteration, dataformats='HWC')
+            plot_gate_outputs_to_numpy(gate_targets[idx].data.cpu().numpy(),
+                                       torch.sigmoid(gate_outputs[idx]).data.cpu().numpy()), iteration, dataformats='HWC')
 
 
 class TextMelLoader(torch.utils.data.Dataset):
@@ -119,10 +114,8 @@ class TextMelLoader(torch.utils.data.Dataset):
             melspec = torch.squeeze(melspec, 0)
         else:
             melspec = torch.from_numpy(np.load(filename))
-            assert melspec.size(0) == self.stft.n_mel_channels, (
-                'Mel dimension mismatch: given {}, expected {}'.format(
-                    melspec.size(0), self.stft.n_mel_channels))
-
+            assert melspec.size(0) == self.stft.n_mel_channels, \
+                ('Mel dimension mismatch: given {}, expected {}'.format(melspec.size(0), self.stft.n_mel_channels))
         return melspec
 
     def get_text(self, text):
@@ -136,21 +129,18 @@ class TextMelLoader(torch.utils.data.Dataset):
         return len(self.audiopaths_and_text)
 
 class TextMelCollate:
-    """ Zero-pads model inputs and targets based on number of frames per setep
-    """
+    """ Zero-pads model inputs and targets based on number of frames per step """
     def __init__(self, n_frames_per_step):
         self.n_frames_per_step = n_frames_per_step
 
     def __call__(self, batch):
-        """Collate's training batch from normalized text and mel-spectrogram
+        """ Collate's training batch from normalized text and mel-spectrogram
         PARAMS
         ------
         batch: [text_normalized, mel_normalized]
         """
         # Right zero-pad all one-hot text sequences to max input length
-        input_lengths, ids_sorted_decreasing = torch.sort(
-            torch.LongTensor([len(x[0]) for x in batch]),
-            dim=0, descending=True)
+        input_lengths, ids_sorted_decreasing = torch.sort(torch.LongTensor([len(x[0]) for x in batch]), dim=0, descending=True)
         max_input_len = input_lengths[0]
 
         text_padded = torch.LongTensor(len(batch), max_input_len)
@@ -178,19 +168,16 @@ class TextMelCollate:
             gate_padded[i, mel.size(1)-1:] = 1
             output_lengths[i] = mel.size(1)
 
-        return text_padded, input_lengths, mel_padded, gate_padded, \
-            output_lengths
+        return text_padded, input_lengths, mel_padded, gate_padded, output_lengths
 
 class TacotronSTFT(torch.nn.Module):
     def __init__(self, filter_length=1024, hop_length=256, win_length=1024,
-                 n_mel_channels=80, sampling_rate=22050, mel_fmin=0.0,
-                 mel_fmax=8000.0):
+                 n_mel_channels=80, sampling_rate=22050, mel_fmin=0.0, mel_fmax=8000.0):
         super(TacotronSTFT, self).__init__()
         self.n_mel_channels = n_mel_channels
         self.sampling_rate = sampling_rate
         self.stft_fn = STFT(filter_length, hop_length, win_length)
-        mel_basis = librosa_mel_fn(
-            sampling_rate, filter_length, n_mel_channels, mel_fmin, mel_fmax)
+        mel_basis = librosa_mel_fn(sampling_rate, filter_length, n_mel_channels, mel_fmin, mel_fmax)
         mel_basis = torch.from_numpy(mel_basis).float()
         self.register_buffer('mel_basis', mel_basis)
 
@@ -220,12 +207,11 @@ class TacotronSTFT(torch.nn.Module):
         mel_output = self.spectral_normalize(mel_output)
         return mel_output
 
-
 class STFT(torch.nn.Module):
     """adapted from Prem Seetharaman's https://github.com/pseeth/pytorch-stft"""
-    def __init__(self, filter_length=800, hop_length=200, win_length=800,
-                 window='hann'):
+    def __init__(self, filter_length=800, hop_length=200, win_length=800, window='hann'):
         super(STFT, self).__init__()
+        self.num_samples = None
         self.filter_length = filter_length
         self.hop_length = hop_length
         self.win_length = win_length
@@ -235,12 +221,10 @@ class STFT(torch.nn.Module):
         fourier_basis = np.fft.fft(np.eye(self.filter_length))
 
         cutoff = int((self.filter_length / 2 + 1))
-        fourier_basis = np.vstack([np.real(fourier_basis[:cutoff, :]),
-                                   np.imag(fourier_basis[:cutoff, :])])
+        fourier_basis = np.vstack([np.real(fourier_basis[:cutoff, :]), np.imag(fourier_basis[:cutoff, :])])
 
         forward_basis = torch.FloatTensor(fourier_basis[:, None, :])
-        inverse_basis = torch.FloatTensor(
-            np.linalg.pinv(scale * fourier_basis).T[:, None, :])
+        inverse_basis = torch.FloatTensor(np.linalg.pinv(scale * fourier_basis).T[:, None, :])
 
         if window is not None:
             assert(filter_length >= win_length)
@@ -265,47 +249,34 @@ class STFT(torch.nn.Module):
         # similar to librosa, reflect-pad the input
         input_data = input_data.view(num_batches, 1, num_samples)
         input_data = torch.functional.F.pad(
-            input_data.unsqueeze(1),
-            (int(self.filter_length / 2), int(self.filter_length / 2), 0, 0),
-            mode='reflect')
+            input_data.unsqueeze(1), (int(self.filter_length / 2), int(self.filter_length / 2), 0, 0), mode='reflect')
         input_data = input_data.squeeze(1)
 
         forward_transform = torch.functional.F.conv1d(
-            input_data,
-            torch.autograd.Variable(self.forward_basis, requires_grad=False),
-            stride=self.hop_length,
-            padding=0)
+            input_data, torch.autograd.Variable(self.forward_basis, requires_grad=False), stride=self.hop_length, padding=0)
 
         cutoff = int((self.filter_length / 2) + 1)
         real_part = forward_transform[:, :cutoff, :]
         imag_part = forward_transform[:, cutoff:, :]
 
         magnitude = torch.sqrt(real_part**2 + imag_part**2)
-        phase = torch.autograd.Variable(
-            torch.atan2(imag_part.data, real_part.data))
+        phase = torch.autograd.Variable(torch.atan2(imag_part.data, real_part.data))
 
         return magnitude, phase
 
     def inverse(self, magnitude, phase):
-        recombine_magnitude_phase = torch.cat(
-            [magnitude*torch.cos(phase), magnitude*torch.sin(phase)], dim=1)
+        recombine_magnitude_phase = torch.cat([magnitude*torch.cos(phase), magnitude*torch.sin(phase)], dim=1)
 
         inverse_transform = torch.functional.F.conv_transpose1d(
-            recombine_magnitude_phase,
-            torch.autograd.Variable(self.inverse_basis, requires_grad=False),
-            stride=self.hop_length,
-            padding=0)
+            recombine_magnitude_phase, torch.autograd.Variable(self.inverse_basis, requires_grad=False), stride=self.hop_length, padding=0)
 
         if self.window is not None:
             window_sum = window_sumsquare(
                 self.window, magnitude.size(-1), hop_length=self.hop_length,
-                win_length=self.win_length, n_fft=self.filter_length,
-                dtype=np.float32)
+                win_length=self.win_length, n_fft=self.filter_length, dtype=np.float32)
             # remove modulation effects
-            approx_nonzero_indices = torch.from_numpy(
-                np.where(window_sum > tiny(window_sum))[0])
-            window_sum = torch.autograd.Variable(
-                torch.from_numpy(window_sum), requires_grad=False)
+            approx_nonzero_indices = torch.from_numpy(np.where(window_sum > tiny(window_sum))[0])
+            window_sum = torch.autograd.Variable(torch.from_numpy(window_sum), requires_grad=False)
             window_sum = window_sum.cuda() if magnitude.is_cuda else window_sum
             inverse_transform[:, :, approx_nonzero_indices] /= window_sum[approx_nonzero_indices]
 
@@ -318,9 +289,10 @@ class STFT(torch.nn.Module):
         return inverse_transform
 
     def forward(self, input_data):
-        self.magnitude, self.phase = self.transform(input_data)
-        reconstruction = self.inverse(self.magnitude, self.phase)
+        magnitude, phase = self.transform(input_data)
+        reconstruction = self.inverse(magnitude, phase)
         return reconstruction
+
 
 def load_wav_to_torch(full_path):
     sampling_rate, data = read(full_path)
@@ -381,6 +353,7 @@ def _unflatten_dense_tensors(flat, tensors):
         outputs.append(flat.narrow(0, offset, numel).view_as(tensor))
         offset += numel
     return tuple(outputs)
+
 
 def window_sumsquare(window, n_frames, hop_length=200, win_length=800, n_fft=800, dtype=np.float32, norm=None):
     """
@@ -447,8 +420,8 @@ def apply_gradient_allreduce(module):
                     buckets[tp].append(parameter)
             if module.warn_on_half:
                 if torch.cuda.HalfTensor in buckets:
-                    print("WARNING: gloo dist backend for half parameters may be extremely slow." +
-                          " It is recommended to use the NCCL backend in this case. This currently requires" +
+                    print("WARNING: gloo dist backend for half parameters may be extremely slow. " +
+                          "It is recommended to use the NCCL backend in this case. This currently requires" +
                           "PyTorch built from top of tree master.")
                     module.warn_on_half = False
 
@@ -462,15 +435,11 @@ def apply_gradient_allreduce(module):
                     buf.copy_(synced)
 
     for param in list(module.parameters()):
-        def allreduce_hook(*unused):
-            torch.autograd.Variable._execution_engine.queue_callback(allreduce_params)
-
         if param.requires_grad:
-            param.register_hook(allreduce_hook)
+            param.register_hook(lambda _: torch.autograd.Variable._execution_engine.queue_callback(allreduce_params))
 
-    def set_needs_reduction(self, inputs, output):
+    def set_needs_reduction(self, _):
         self.needs_reduction = True
-
     module.register_forward_hook(set_needs_reduction)
     return module
 
@@ -483,8 +452,7 @@ def save_figure_to_numpy(fig):
 
 def plot_alignment_to_numpy(alignment, info=None):
     fig, ax = plt.subplots(figsize=(6, 4))
-    im = ax.imshow(alignment, aspect='auto', origin='lower',
-                   interpolation='none')
+    im = ax.imshow(alignment, aspect='auto', origin='lower', interpolation='none')
     fig.colorbar(im, ax=ax)
     xlabel = 'Decoder timestep'
     if info is not None:
@@ -500,8 +468,7 @@ def plot_alignment_to_numpy(alignment, info=None):
 
 def plot_spectrogram_to_numpy(spectrogram):
     fig, ax = plt.subplots(figsize=(12, 3))
-    im = ax.imshow(spectrogram, aspect="auto", origin="lower",
-                   interpolation='none')
+    im = ax.imshow(spectrogram, aspect="auto", origin="lower", interpolation='none')
     plt.colorbar(im, ax=ax)
     plt.xlabel("Frames")
     plt.ylabel("Channels")
@@ -514,10 +481,8 @@ def plot_spectrogram_to_numpy(spectrogram):
 
 def plot_gate_outputs_to_numpy(gate_targets, gate_outputs):
     fig, ax = plt.subplots(figsize=(12, 3))
-    ax.scatter(range(len(gate_targets)), gate_targets, alpha=0.5,
-               color='green', marker='+', s=1, label='target')
-    ax.scatter(range(len(gate_outputs)), gate_outputs, alpha=0.5,
-               color='red', marker='.', s=1, label='predicted')
+    ax.scatter(range(len(gate_targets)), gate_targets, alpha=0.5, color='green', marker='+', s=1, label='target')
+    ax.scatter(range(len(gate_outputs)), gate_outputs, alpha=0.5, color='red', marker='.', s=1, label='predicted')
 
     plt.xlabel("Frames (Green target, Red predicted)")
     plt.ylabel("Gate State")
@@ -543,9 +508,8 @@ def init_distributed(hparams, n_gpus, rank, group_name):
     torch.cuda.set_device(rank % torch.cuda.device_count())
 
     # Initialize distributed communication
-    dist.init_process_group(
-        backend=hparams.dist_backend, init_method=hparams.dist_url,
-        world_size=n_gpus, rank=rank, group_name=group_name)
+    dist.init_process_group(backend=hparams.dist_backend, init_method=hparams.dist_url,
+                            world_size=n_gpus, rank=rank, group_name=group_name)
 
     print("Done initializing distributed")
 
@@ -563,10 +527,8 @@ def prepare_dataloaders(hparams):
         train_sampler = None
         shuffle = True
 
-    train_loader = DataLoader(trainset, num_workers=1, shuffle=shuffle,
-                              sampler=train_sampler,
-                              batch_size=hparams.batch_size, pin_memory=False,
-                              drop_last=True, collate_fn=collate_fn)
+    train_loader = DataLoader(trainset, num_workers=1, shuffle=shuffle, sampler=train_sampler,
+                              batch_size=hparams.batch_size, pin_memory=False, drop_last=True, collate_fn=collate_fn)
     return train_loader, valset, collate_fn
 
 def prepare_directories_and_logger(output_directory, log_directory, rank):
@@ -595,8 +557,7 @@ def warm_start_model(checkpoint_path, model, ignore_layers):
     checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
     model_dict = checkpoint_dict['state_dict']
     if len(ignore_layers) > 0:
-        model_dict = {k: v for k, v in model_dict.items()
-                      if k not in ignore_layers}
+        model_dict = {k: v for k, v in model_dict.items() if k not in ignore_layers}
         dummy_dict = model.state_dict()
         dummy_dict.update(model_dict)
         model_dict = dummy_dict
@@ -612,27 +573,21 @@ def load_checkpoint(checkpoint_path, model, optimizer):
     optimizer.load_state_dict(checkpoint_dict['optimizer'])
     learning_rate = checkpoint_dict['learning_rate']
     iteration = checkpoint_dict['iteration']
-    print("Loaded checkpoint '{}' from iteration {}" .format(
-        checkpoint_path, iteration))
+    print("Loaded checkpoint '{}' from iteration {}" .format(checkpoint_path, iteration))
     return model, optimizer, learning_rate, iteration
 
 def save_checkpoint(model, optimizer, learning_rate, iteration, filepath):
-    print("Saving model and optimizer state at iteration {} to {}".format(
-        iteration, filepath))
-    torch.save({'iteration': iteration,
-                'state_dict': model.state_dict(),
-                'optimizer': optimizer.state_dict(),
-                'learning_rate': learning_rate}, filepath)
+    print("Saving model and optimizer state at iteration {} to {}".format(iteration, filepath))
+    torch.save({'iteration': iteration, 'state_dict': model.state_dict(),
+                'optimizer': optimizer.state_dict(), 'learning_rate': learning_rate}, filepath)
 
-def validate(model, criterion, valset, iteration, batch_size, n_gpus,
-             collate_fn, logger, distributed_run, rank):
+def validate(model, criterion, valset, iteration, batch_size, n_gpus, collate_fn, logger, distributed_run, rank):
     """Handles all the validation scoring and printing"""
     model.eval()
     with torch.no_grad():
         val_sampler = DistributedSampler(valset) if distributed_run else None
-        val_loader = DataLoader(valset, sampler=val_sampler, num_workers=1,
-                                shuffle=False, batch_size=batch_size,
-                                pin_memory=False, collate_fn=collate_fn)
+        val_loader = DataLoader(valset, sampler=val_sampler, num_workers=1, shuffle=False,
+                                batch_size=batch_size, pin_memory=False, collate_fn=collate_fn)
 
         val_loss = 0.0
         for i, batch in enumerate(val_loader):
@@ -651,7 +606,6 @@ def validate(model, criterion, valset, iteration, batch_size, n_gpus,
         print("Validation loss {}: {:9f}  ".format(iteration, val_loss))
         logger.log_validation(val_loss, model, y, y_pred, iteration)
 
-
 def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus, rank, group_name, hparams):
     """Training and validation logging results to tensorboard and stdout
 
@@ -662,7 +616,7 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus, 
     checkpoint_path(string): checkpoint path
     n_gpus (int): number of gpus
     rank (int): rank of current gpu
-    hparams (object): comma separated list of "name=value" pairs.
+    hparams (object): class of contain hparameters
     """
     if hparams.distributed_run:
         init_distributed(hparams, n_gpus, rank, group_name)
@@ -672,21 +626,18 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus, 
 
     model = load_model(hparams)
     learning_rate = hparams.learning_rate
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate,
-                                 weight_decay=hparams.weight_decay)
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=hparams.weight_decay)
 
     if hparams.fp16_run:
-        from apex import amp
-        model, optimizer = amp.initialize(
-            model, optimizer, opt_level='O2')
+        from apex import amp  # TODO searching about apex package
+        model, optimizer = amp.initialize(model, optimizer, opt_level='O2')
 
     if hparams.distributed_run:
         model = apply_gradient_allreduce(model)
 
     criterion = Tacotron2Loss()
 
-    logger = prepare_directories_and_logger(
-        output_directory, log_directory, rank)
+    logger = prepare_directories_and_logger(output_directory, log_directory, rank)
 
     train_loader, valset, collate_fn = prepare_dataloaders(hparams)
 
@@ -695,11 +646,9 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus, 
     epoch_offset = 0
     if checkpoint_path is not None:
         if warm_start:
-            model = warm_start_model(
-                checkpoint_path, model, hparams.ignore_layers)
+            model = warm_start_model(checkpoint_path, model, hparams.ignore_layers)
         else:
-            model, optimizer, _learning_rate, iteration = load_checkpoint(
-                checkpoint_path, model, optimizer)
+            model, optimizer, _learning_rate, iteration = load_checkpoint(checkpoint_path, model, optimizer)
             if hparams.use_saved_learning_rate:
                 learning_rate = _learning_rate
             iteration += 1  # next iteration is iteration + 1
@@ -731,31 +680,24 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus, 
                 loss.backward()
 
             if hparams.fp16_run:
-                grad_norm = torch.nn.utils.clip_grad_norm_(
-                    amp.master_params(optimizer), hparams.grad_clip_thresh)
+                grad_norm = torch.nn.utils.clip_grad_norm_(amp.master_params(optimizer), hparams.grad_clip_thresh)
                 is_overflow = math.isnan(grad_norm)
             else:
-                grad_norm = torch.nn.utils.clip_grad_norm_(
-                    model.parameters(), hparams.grad_clip_thresh)
+                grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), hparams.grad_clip_thresh)
 
             optimizer.step()
 
             if not is_overflow and rank == 0:
                 duration = time.perf_counter() - start
-                print("Train loss {} {:.6f} Grad Norm {:.6f} {:.2f}s/it".format(
-                    iteration, reduced_loss, grad_norm, duration))
-                logger.log_training(
-                    reduced_loss, grad_norm, learning_rate, duration, iteration)
+                print("Train loss {} {:.6f} Grad Norm {:.6f} {:.2f}s/it".format(iteration, reduced_loss, grad_norm, duration))
+                logger.log_training(reduced_loss, grad_norm, learning_rate, duration, iteration)
 
             if not is_overflow and (iteration % hparams.iters_per_checkpoint == 0):
-                validate(model, criterion, valset, iteration,
-                         hparams.batch_size, n_gpus, collate_fn, logger,
-                         hparams.distributed_run, rank)
+                validate(model, criterion, valset, iteration, hparams.batch_size,
+                         n_gpus, collate_fn, logger, hparams.distributed_run, rank)
                 if rank == 0:
-                    checkpoint_path = os.path.join(
-                        output_directory, "checkpoint_{}".format(iteration))
-                    save_checkpoint(model, optimizer, learning_rate, iteration,
-                                    checkpoint_path)
+                    checkpoint_path = os.path.join(output_directory, "checkpoint_{}".format(iteration))
+                    save_checkpoint(model, optimizer, learning_rate, iteration,checkpoint_path)
 
             iteration += 1
 
