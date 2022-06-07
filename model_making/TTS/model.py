@@ -166,11 +166,10 @@ class STFT(torch.nn.Module):
 
         # similar to librosa, reflect-pad the input
         input_data = input_data.view(num_batches, 1, num_samples)
-        input_data = torch.functional.F.pad(
-            input_data.unsqueeze(1), (int(self.filter_length / 2), int(self.filter_length / 2), 0, 0), mode='reflect')
+        input_data = F.pad(input_data.unsqueeze(1), (int(self.filter_length / 2), int(self.filter_length / 2), 0, 0), mode='reflect')
         input_data = input_data.squeeze(1)
 
-        forward_transform = torch.functional.F.conv1d(
+        forward_transform = F.conv1d(
             input_data, torch.autograd.Variable(self.forward_basis, requires_grad=False), stride=self.hop_length, padding=0)
 
         cutoff = int((self.filter_length / 2) + 1)
@@ -185,7 +184,7 @@ class STFT(torch.nn.Module):
     def inverse(self, magnitude, phase):
         recombine_magnitude_phase = torch.cat([magnitude*torch.cos(phase), magnitude*torch.sin(phase)], dim=1)
 
-        inverse_transform = torch.functional.F.conv_transpose1d(
+        inverse_transform = F.conv_transpose1d(
             recombine_magnitude_phase, torch.autograd.Variable(self.inverse_basis, requires_grad=False), stride=self.hop_length, padding=0)
 
         if self.window is not None:

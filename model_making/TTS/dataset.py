@@ -20,6 +20,18 @@ from hparams import symbols, hparams as hps
 _symbol_to_id = {s: i for i, s in enumerate(symbols.symbols)}
 _id_to_symbol = {i: s for i, s in enumerate(symbols.symbols)}
 
+def split_train_val():
+    train = ""
+    val = ""
+    for dir_path in ["../../data/TTS/trim_k_kwunT", "../../data/TTS/trim_kss"]:
+        for line in open(os.path.join(dir_path, "transcript.txt"), "r+", encoding="utf-8").readlines():
+            if random.random() > 0.2:
+                train += dir_path + "/" + line
+            else:
+                val += dir_path + "/" + line
+    open("../../data/TTS/train.txt", "w+", encoding="utf-8").write(train)
+    open("../../data/TTS/val.txt", "w+", encoding="utf-8").write(val)
+
 def get_number_of_digits(i: int) -> str:
     assert i != 0
 
