@@ -3,6 +3,6 @@ __pycache__
 # data folder
 data
 # venv
-venv
+temp_venv
 # plan file
 plan.md
