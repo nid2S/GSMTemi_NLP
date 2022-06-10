@@ -7,6 +7,7 @@ class hparams:
     ############################
     device = "cuda" if torch.cuda.is_available() else "cpu"
     n_workers = torch.cuda.device_count() if torch.cuda.is_available() else os.cpu_count() - 1
+    pad_token_idx = 0
 
     # path
     main_data_greedy_factor = 0
