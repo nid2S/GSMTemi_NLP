@@ -5,17 +5,35 @@ class hparams:
     ############################
     # train hyper parameter    #
     ############################
+    seed = 7777
+    # train
+    epochs = 500
+    batch_size = 16
+    iters_per_checkpoint = 10000
+    prioritize_loss = False
+
+    # Model
+    model_type = 'multi-speaker'  # [single, multi-speaker]
+    speaker_embedding_size = 16
+    pad_token_idx = 0
+    num_speakers = 1
+
+    # device
     device = "cuda" if torch.cuda.is_available() else "cpu"
     n_workers = torch.cuda.device_count() if torch.cuda.is_available() else os.cpu_count() - 1
-    pad_token_idx = 0
 
     # path
-    main_data_greedy_factor = 0
-    main_data = ['']  # 이곳에 있는 directory 속에 있는 data는 가중치를 'main_data_greedy_factor' 만큼 더 준다.
-    data_path = ""
-    log_path = ""
-    output_path = ""
-    ignore_dir = [""]
+    initial_data_greedy = True
+    initial_phase_step = 8000  # main greey factor가 적용되기 까지의 step
+    main_data_greedy_factor = 0  # main data에 적용될 가중치
+    main_data = ['']  # 가중치가 적용될 main data
+
+    training_files = '../../data/TTS/train.txt'
+    validation_files = '../../data/TTS/val.txt'
+    model_output_path = '../../models/TTS/Tacotron2/ckpt'
+    logging_dir = '../../models/TTS/Tacotron2/log'
+    last_ckpt = f"{model_output_path}/checkpoint_{max(int(ckpt.split('_')[1]) for ckpt in os.listdir(model_output_path))}" \
+        if os.listdir(model_output_path) else ""
 
     # layer params
     adam_beta1 = 0.9
@@ -68,14 +86,16 @@ class hparams:
     trim_fft_size = 512
     trim_hop_size = 128
     trim_top_db = 23
-    
-    clip_mels_length = True  # For cases of OOM (Not really recommended, only use if facing unsolvable OOM errors, also consider clipping your samples to smaller chunks)
-    max_mel_frames = 1000    # Only relevant when clip_mels_length = True, please only use after trying output_per_steps=3 and still getting OOM errors.
+
+    # For cases of OOM (Not really recommended, only use if facing unsolvable OOM errors, also consider clipping your samples to smaller chunks)
+    clip_mels_length = True
+    # Only relevant when clip_mels_length = True, please only use after trying output_per_steps=3 and still getting OOM errors.
+    max_mel_frames = 1000
     l2_regularization_strength = 0  # Coefficient in the L2 regularization.
     sample_size = 9000              # Concatenate and cut audio samples to this many samples
     silence_threshold = 0           # Volume threshold below which to trim the start and the end from the training set samples. e.g. 2
     filter_width = 3
-    gc_channels = 32                # global_condition_vector의 차원. 이것 지정함으로써, global conditioning을 모델에 반영하라는 의미가 된다.
+    gc_channels = 32                # global_condition_vector의 차원. 이것읖 지정함으로써, global conditioning을 모델에 반영하라는 의미가 된다.
 
     input_type = "raw"              # 'mulaw-quantize', 'mulaw', 'raw',   mulaw, raw 2가지는 scalar input
     scalar_input = True             # input_type과 맞아야 함.
@@ -90,15 +110,6 @@ class hparams:
     upsample_type = 'SubPixel'     # 'SubPixel', None
     upsample_factor = [12, 25]     # np.prod(upsample_factor) must equal to hop_size
 
-    # Training
-    initial_data_greedy = True
-    initial_phase_step = 8000   # 여기서 지정한 step 이전에는 data_dirs의 각각의 디렉토리에 대하여 같은 수의 example을 만들고, 이후, weght 비듈에 따라 ... 즉, 아래의 'main_data_greedy_factor'의 영향을 받는다.
-    prioritize_loss = False
-
-    # Model
-    model_type = 'multi-speaker'  # [single, multi-speaker]
-    speaker_embedding_size = 16
-
     # Encoder
     enc_conv_num_layers = 3
     enc_conv_kernel_size = 5
@@ -107,7 +118,6 @@ class hparams:
     encoder_lstm_units = 256
 
     # Attention mechanism
-    attention_type = 'bah_mon_norm'    # 'loc_sen', 'bah_mon_norm'
     smoothing = False          # Whether to smooth the attention normalization function
     attention_filters = 32     # number of attention convolution filters
     attention_kernel = (31, )  # kernel size of attention convolution
@@ -126,7 +136,6 @@ class hparams:
     # Decoder
     prenet_layers = [256, 256]     # number of layers and number of units of prenet
     dec_prenet_sizes = [256, 256]  # number of layers and number of units of prenet
-    decoder_layers = 2             # number of decoder lstm layers
     decoder_lstm_units = 1024      # number of decoder lstm units on each layer
 
     # Residual postnet
