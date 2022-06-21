@@ -18,17 +18,18 @@ class ChatBot:
         self.pre_questions = None
         self.num_of_recommended_quetion = 10
         self.condition_of_similarity = 0.9
+        self.place_range = list(range(-1, 14))
         self.unknown_answer = "죄송합니다. 질문을 잘 모르겠어요. 다시 질문해주세요."
 
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.compress_tokenizer = PreTrainedTokenizerFast.from_pretrained("../tokenizer")
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.compress_tokenizer = PreTrainedTokenizerFast.from_pretrained("../tokenizer", use_cache=True)
         self.compress_model = torch.nn.Embedding(51200, 768).to(self.device)
         self.compress_model.load_state_dict(torch.load("./embedding_model_state.pt"))
 
     def question(self, user_question: str) -> str:
         """
         Ask a Question to Chatbot.\n
-        return the most similar answer in database.\n
+        return the most similar answer in QnA database.\n
         have to process setPlace method before.\n
         if the answer does NOT exist,\n
         return the prepared answer and reflect this question in next recommended questions.\n
@@ -36,9 +37,9 @@ class ChatBot:
         Example
         -------
         >>> user_text = "여기는 어디인가요?"
-        >>> database = [["여기가 어딘가요?", "여기는 학교의 정문입니다.", torch.rand(768, dtype=torch.float), 0]]
+        >>> QnA_database = [["여기가 어딘가요?", "여기는 학교의 정문입니다.", torch.rand(768, dtype=torch.float), 0]]
         >>>
-        >>> chatbot = ChatBot(database)
+        >>> chatbot = ChatBot(QnA_database)
         >>> chatbot.setPlace(0)
         >>> re_ques = chatbot.make_recommended_questions()
         >>> bot_answer = chatbot.question(user_text)
@@ -72,9 +73,9 @@ class ChatBot:
         Example
         -------
         >>> user_text = "여기는 어디인가요?"
-        >>> database = [["여기가 어딘가요?", "여기는 학교의 정문입니다.", torch.rand(768, dtype=torch.float), 0]]
+        >>> QnA_database = [["여기가 어딘가요?", "여기는 학교의 정문입니다.", torch.rand(768, dtype=torch.float), 0]]
         >>>
-        >>> chatbot = ChatBot(database)
+        >>> chatbot = ChatBot(QnA_database)
         >>> chatbot.setPlace(0)
         >>> re_ques = chatbot.make_recommended_questions()
         >>> bot_answer = chatbot.question(user_text)
@@ -85,7 +86,7 @@ class ChatBot:
 
         questions = self.QandA_of_place
         if self.pre_questions is not None:
-            sim_quesions = [[self._get_cosine_similarity(self.pre_questions, v), q] for q, _, v in self.QandA_of_place]
+            sim_quesions = [[self._get_cosine_similarity(self.pre_questions, v), q] for q, _, v in questions]
             sorted_quetions = sorted(sim_quesions, reverse=True)
             questions = [q for _, q in sorted_quetions]
             self.pre_questions = None
@@ -102,9 +103,9 @@ class ChatBot:
         Example
         -------
         >>> user_text = "여기는 어디인가요?"
-        >>> database = [["여기가 어딘가요?", "여기는 학교의 정문입니다.", torch.rand(768, dtype=torch.float), 0]]
+        >>> QnA_database = [["여기가 어딘가요?", "여기는 학교의 정문입니다.", torch.rand(768, dtype=torch.float), 0]]
         >>>
-        >>> chatbot = ChatBot(database)
+        >>> chatbot = ChatBot(QnA_database)
         >>> chatbot.setPlace(0)
         >>> re_ques = chatbot.make_recommended_questions()
         >>> bot_answer = chatbot.question(user_text)
@@ -112,13 +113,8 @@ class ChatBot:
         :param place_id: the id of place. The database has to have questions of this place.
         :return: None
         """
-        QandA_of_place = []
-        for q, a, v, place in self.QandA:
-            if place == place_id:
-                QandA_of_place.append([q, a, v])
-
-        assert QandA_of_place
-        self.QandA_of_place = QandA_of_place
+        assert place_id in self.place_range, "place id has to include in place range"
+        self.QandA_of_place = filter(lambda x: x[3] in [place_id, -1], self.QandA)
 
     def _get_cosine_similarity(self, v1: List[float], v2: List[float]) -> float:
         v1 = torch.FloatTensor(v1).unsqueeze(0)
@@ -130,4 +126,3 @@ class ChatBot:
         embedding_vector = self.compress_model(encoded_ques)  # (1, token_num, embedding_dim(768))
         embedding_vector = torch.mean(embedding_vector, dim=1).squeeze()  # (embedding_dim)
         return embedding_vector
-
