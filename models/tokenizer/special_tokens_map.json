@@ -4,5 +4,13 @@
   "unk_token": "<unk>",
   "pad_token": "<pad>",
   "mask_token": "<mask>",
-  "additional_special_tokens": ["[HAPPY]", "[PANIC]", "[ANGRY]", "[UNSTABLE]", "[HURT]", "[SAD]", "[NEUTRAL]"]
+  "additional_special_tokens": [
+    "[HAPPY]",
+    "[PANIC]",
+    "[ANGRY]",
+    "[UNSTABLE]",
+    "[HURT]",
+    "[SAD]",
+    "[NEUTRAL]"
+  ]
 }

@@ -2,7 +2,9 @@ from transformers import PreTrainedTokenizerFast
 from typing import List
 import random
 import torch
+
 random.seed(7777)
+
 
 class ChatBot:
     """
@@ -21,7 +23,9 @@ class ChatBot:
         self.unknown_answer = "죄송합니다. 질문을 잘 모르겠어요. 다시 질문해주세요."
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.compress_tokenizer = PreTrainedTokenizerFast.from_pretrained("../tokenizer")
+        self.compress_tokenizer = PreTrainedTokenizerFast.from_pretrained(
+            "../tokenizer"
+        )
         self.compress_model = torch.nn.Embedding(51200, 768).to(self.device)
         self.compress_model.load_state_dict(torch.load("./embedding_model_state.pt"))
 
@@ -53,7 +57,9 @@ class ChatBot:
         answer = self.unknown_answer
 
         for _, a, question_vector in self.QandA_of_place:
-            turn_similarity = self._get_cosine_similarity(question_vector, user_question)
+            turn_similarity = self._get_cosine_similarity(
+                question_vector, user_question
+            )
             if turn_similarity > best_similarity:
                 best_similarity = turn_similarity
                 answer = a
@@ -85,13 +91,16 @@ class ChatBot:
 
         questions = self.QandA_of_place
         if self.pre_questions is not None:
-            sim_quesions = [[self._get_cosine_similarity(self.pre_questions, v), q] for q, _, v in self.QandA_of_place]
+            sim_quesions = [
+                [self._get_cosine_similarity(self.pre_questions, v), q]
+                for q, _, v in self.QandA_of_place
+            ]
             sorted_quetions = sorted(sim_quesions, reverse=True)
             questions = [q for _, q in sorted_quetions]
             self.pre_questions = None
         else:
             random.shuffle(questions)
-        return questions[:self.num_of_recommended_quetion]
+        return questions[: self.num_of_recommended_quetion]
 
     def setPlace(self, place_id: int):
         """
@@ -126,8 +135,13 @@ class ChatBot:
         return torch.cosine_similarity(v1, v2).item()
 
     def _encoding_question(self, ques: str) -> torch.FloatTensor:
-        encoded_ques = self.compress_tokenizer.encode(ques, return_tensors="pt")  # (1, token_num)
-        embedding_vector = self.compress_model(encoded_ques)  # (1, token_num, embedding_dim(768))
-        embedding_vector = torch.mean(embedding_vector, dim=1).squeeze()  # (embedding_dim)
+        encoded_ques = self.compress_tokenizer.encode(
+            ques, return_tensors="pt"
+        )  # (1, token_num)
+        embedding_vector = self.compress_model(
+            encoded_ques
+        )  # (1, token_num, embedding_dim(768))
+        embedding_vector = torch.mean(
+            embedding_vector, dim=1
+        ).squeeze()  # (embedding_dim)
         return embedding_vector
-
