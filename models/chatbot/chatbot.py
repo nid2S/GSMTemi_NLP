@@ -54,7 +54,9 @@ class ChatBot:
         answer = self.unknown_answer
 
         for _, a, question_vector in self.QandA_of_place:
-            turn_similarity = self._get_cosine_similarity(question_vector, user_question)
+            turn_similarity = self._get_cosine_similarity(
+                question_vector, user_question
+            )
             if turn_similarity > best_similarity:
                 best_similarity = turn_similarity
                 answer = a
@@ -86,13 +88,16 @@ class ChatBot:
 
         questions = self.QandA_of_place
         if self.pre_questions is not None:
-            sim_quesions = [[self._get_cosine_similarity(self.pre_questions, v), q] for q, _, v in questions]
+            sim_quesions = [
+                [self._get_cosine_similarity(self.pre_questions, v), q]
+                for q, _, v in questions
+            ]
             sorted_quetions = sorted(sim_quesions, reverse=True)
             questions = [q for _, q in sorted_quetions]
             self.pre_questions = None
         else:
             random.shuffle(questions)
-        return questions[:self.num_of_recommended_quetion]
+        return questions[: self.num_of_recommended_quetion]
 
     def setPlace(self, place_id: int):
         """
