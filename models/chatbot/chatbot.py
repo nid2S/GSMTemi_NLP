@@ -22,7 +22,7 @@ class ChatBot:
         self.unknown_answer = "죄송합니다. 질문을 잘 모르겠어요. 다시 질문해주세요."
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.compress_tokenizer = PreTrainedTokenizerFast.from_pretrained("../tokenizer", use_cache=True)
+        self.compress_tokenizer = PreTrainedTokenizerFast.from_pretrained("./tokenizer", use_cache=True)
         self.compress_model = torch.nn.Embedding(51200, 768).to(self.device)
         self.compress_model.load_state_dict(torch.load("./embedding_model_state.pt"))
 
