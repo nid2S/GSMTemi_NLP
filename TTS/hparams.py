@@ -57,13 +57,10 @@ class hparams:
     n_workers = torch.cuda.device_count() if torch.cuda.is_available() else 2
     # distributed = torch.cuda.is_available() and n_workers > 1
     distributed = False
-    if distributed:
-        # os.environ["CUDA_VISIBLE_DEVICES"] = "0, 1"  # 사용할 GPU 정의
-        os.environ["WORLD_SIZE"] = str(n_workers)  # 전체 디바이스 개수
-        os.environ["RANK"] = "0"  # 1순위로 사용할 노드의 번호
-        os.environ["LOCAL_RANK"] = "0"  # 사용할 수 있는 기기중 1순위로 할 기기의 번호.
-        # os.environ["MASTER_ADDR"] = "0"  # 순위 0 노드의 주소. RANK 0 이면 불필요
-        # os.environ["MASTER_PORT"] = "22"  # 순위 0 머신의 포트(자유상태여야 함)
+    # if torch.cuda.is_available() and n_workers > 1:
+    #     os.environ["WORLD_SIZE"] = str(n_workers)
+    #     os.environ["RANK"] = "0"
+    #     os.environ["LOCAL_RANK"] = "0"
     convert_alpha = True
     convert_number = True
     pin_mem = True
@@ -84,12 +81,12 @@ class hparams:
     eg_text = '타코트론 모델의 성능 확인을 위한 예시 텍스트 입니다.'
 
     # path
-    pickle_path = ""
-    default_data_path = "../../data/TTS"
-    default_ckpt_path = "../../models/TTS/Tacotron2/ckpt"
-    default_log_path = "../../models/TTS/Tacotron2/log"
+    default_data_path = "../data/TTS"
+    default_ckpt_path = "./models/Tacotron2/ckpt/BogiHsu"
+    default_log_path = "./models/Tacotron2/log"
     last_ckpt = f"{default_ckpt_path}/ckpt_{max(int(ckpt.split('_')[1]) for ckpt in os.listdir(default_ckpt_path))}"\
-        if os.listdir(default_ckpt_path) else ""
+        if os.path.exists(default_ckpt_path) and os.listdir(default_ckpt_path) else ""
+    ignore_data_dir = ["trim_k_kwunT"]
 
     # params
     # model

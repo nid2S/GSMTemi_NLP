@@ -8,7 +8,7 @@ import torch
 import tensorboardX
 import torch.distributed as dist
 
-from dataset import prepare_dataloaders, inv_melspectrogram, text_to_sequence
+from dataset import prepare_dataloaders, griffin_lim, text_to_sequence
 from model import Tacotron2, Tacotron2Loss
 from hparams import hparams as hps
 os.environ["CUDA_VISIBLE_DEVICES"] = '1'
@@ -29,14 +29,14 @@ def load_checkpoint(ckpt_pth, model, optimizer, device):
     iteration = ckpt_dict['iteration']
     return model, optimizer, iteration
 
+def to_arr(var) -> np.ndarray:
+    return var.cpu().detach().numpy().astype(np.float32)
+
 def infer(text, TTSmodel):
     sequence = text_to_sequence(text)
     sequence = torch.IntTensor(sequence)[None, :].to(hps.device).long()
     mel_outputs, mel_outputs_postnet, _, alignments = TTSmodel.inference(sequence)
     return mel_outputs, mel_outputs_postnet, alignments
-
-def to_arr(var) -> np.ndarray:
-    return var.cpu().detach().numpy().astype(np.float32)
 
 
 class Tacotron2Logger(tensorboardX.SummaryWriter):
@@ -70,8 +70,8 @@ class Tacotron2Logger(tensorboardX.SummaryWriter):
         self.add_image('infer.mel_post', self.plot_spectrogram_to_numpy(mel_outputs_postnet), iteration)
 
         # save audio
-        wav = inv_melspectrogram(mel_outputs)
-        wav_postnet = inv_melspectrogram(mel_outputs_postnet)
+        wav = griffin_lim(mel_outputs)
+        wav_postnet = griffin_lim(mel_outputs_postnet)
         self.add_audio('infer.wav', wav, iteration, hps.sample_rate)
         self.add_audio('infer.wav_post', wav_postnet, iteration, hps.sample_rate)
 
@@ -114,7 +114,7 @@ def train(args):
     local_rank = 1
     if hps.distributed:
         dist.init_process_group(backend='nccl', rank=local_rank, world_size=hps.n_workers)
-    if torch.cuda.is_available():
+    if local_rank:
         torch.cuda.set_device(local_rank)
     device = torch.device('cuda:{:d}'.format(local_rank))
 

@@ -6,5 +6,7 @@ data
 temi_venv
 # plan file
 plan.md
-# command file
-commands.txt
+# model ckpt
+TTS/models/Tacotron2/ckpt_k
+TTS/models/Tacotron2/ckpt
+TTS/models/Tacotron2/log

@@ -176,6 +176,17 @@ class Encoder(nn.Module):
         outputs, _ = self.lstm(x)
         return outputs
 
+class Prenet(nn.Module):
+    def __init__(self, in_dim, sizes):
+        super(Prenet, self).__init__()
+        in_sizes = [in_dim] + sizes[:-1]
+        self.layers = nn.ModuleList([LinearNorm(in_size, out_size, bias=False) for (in_size, out_size) in zip(in_sizes, sizes)])
+
+    def forward(self, x):
+        for linear in self.layers:
+            x = F.dropout(F.relu(linear(x)), p=hps.dropout_rate, training=True)
+        return x
+
 class Decoder(nn.Module):
     def __init__(self):
         super(Decoder, self).__init__()
@@ -393,17 +404,6 @@ class Decoder(nn.Module):
 
         mel_outputs, gate_outputs, alignments = self.parse_decoder_outputs(mel_outputs, gate_outputs, alignments)
         return mel_outputs, gate_outputs, alignments
-
-class Prenet(nn.Module):
-    def __init__(self, in_dim, sizes):
-        super(Prenet, self).__init__()
-        in_sizes = [in_dim] + sizes[:-1]
-        self.layers = nn.ModuleList([LinearNorm(in_size, out_size, bias=False) for (in_size, out_size) in zip(in_sizes, sizes)])
-
-    def forward(self, x):
-        for linear in self.layers:
-            x = F.dropout(F.relu(linear(x)), p=hps.dropout_rate, training=True)
-        return x
 
 class Postnet(nn.Module):
     """
