@@ -1,7 +1,7 @@
 from typing import Optional, Tuple
 from numpy import ndarray
 
-from TTS.inference import Synthesizer
+from .TTS.inference import Synthesizer
 from chatbot.chatbot import ChatBot
 
 synthesizer = Synthesizer("./TTS/models/Tacotron2/ckpt_300000", "./TTS/models/hifigan/")
