@@ -1,11 +1,10 @@
 import re
-
-import torch
 import os
 import time
+import warnings
+import torch
 import numpy as np
 import matplotlib.pylab as plt
-from typing import Sequence
 
 import simpleaudio
 from scipy.io import wavfile
@@ -15,6 +14,7 @@ from speechbrain.pretrained import HIFIGAN
 from model import Tacotron2
 from hparams import hparams as hps
 from dataset import text_to_sequence, griffin_lim
+warnings.filterwarnings('ignore')
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 font_path = "C:/Windows/Fonts/malgunbd.ttf"
 font = font_manager.FontProperties(fname=font_path).get_name()
@@ -38,11 +38,10 @@ class Synthesizer:
         self.tacotron = self.load_model(tacotron_check, self.tacotron)
         self.hifi_gan = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-ljspeech", savedir=vocoder_dir)
         if torch.cuda.is_available():
-            self.tacotron.cuda().eval()
-            self.hifi_gan.cuda().eval()
-        else:
-            self.tacotron.eval()
-            self.hifi_gan.eval()
+            self.tacotron.cuda()
+            self.hifi_gan.cuda()
+        self.tacotron.eval()
+        self.hifi_gan.eval()
 
     def synthesize(self, text, use_griffin_lim: bool = False):
         """
@@ -150,10 +149,10 @@ class Synthesizer:
 
 if __name__ == '__main__':
     path = "../res"
-    text = "주문을 도와드릴 에이아이 챗봇 입니다."
-    title = re.sub('\W', ' ', text).strip().replace(' ', '_')
+    g_text = "주문을 도와드릴 에이아이 챗봇 입니다."
+    title = re.sub('\W', ' ', g_text).strip().replace(' ', '_')
     synthesizer = Synthesizer("./models/Tacotron2/ckpt_300000", "../models/TTS/hifigan/")
-    g_audio, _, _ = synthesizer.synthesize(text)
+    g_audio, _, _ = synthesizer.synthesize(g_text)
     synthesizer.save_plot("../res/res.png")
     synthesizer.save_wave(f"{path}/{title}.wav", g_audio)
     synthesizer.play_audio(g_audio)

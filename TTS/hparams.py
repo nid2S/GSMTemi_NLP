@@ -40,7 +40,9 @@ class symbols:
 class hparams:
     seed = 7777
 
-    # audio
+    #########
+    # audio #
+    #########
     MAX_WAV_VALUE = 32768.0
     num_mels = 80
     num_freq = 513
@@ -50,46 +52,56 @@ class hparams:
     frame_length = 1024
     sample_rate = 22050
     power = 1.5
-    gl_iters = 30
+    gl_iters = 30  # griffin lim iteration
 
-    # train
+    #########
+    # train #
+    #########
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     n_workers = torch.cuda.device_count() if torch.cuda.is_available() else 2
-    # distributed = torch.cuda.is_available() and n_workers > 1
-    distributed = False
-    # if torch.cuda.is_available() and n_workers > 1:
-    #     os.environ["WORLD_SIZE"] = str(n_workers)
-    #     os.environ["RANK"] = "0"
-    #     os.environ["LOCAL_RANK"] = "0"
-    convert_alpha = True
-    convert_number = True
+
+    is_transfer = True
     pin_mem = True
     prep = True
-    lr = 2e-3
-    eps = 1e-5
-    betas = (0.9, 0.999)
-    weight_decay = 1e-6
-    dropout_rate = 0.4
     sch = True
-    sch_step = 4000
-    max_iter = 300e3
-    batch_size = 16
-    iters_per_log = 10
-    iters_per_sample = 500
-    iters_per_ckpt = 10000
-    grad_clip_thresh = 1.0
-    eg_text = '타코트론 모델의 성능 확인을 위한 예시 텍스트 입니다.'
+    convert_alpha = True
+    convert_number = True
+    distributed = False
+    # distributed = torch.cuda.is_available() and n_workers > 1
+    if distributed:
+        # os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+        os.environ["WORLD_SIZE"] = str(n_workers)
+        os.environ["RANK"] = "0"
+        os.environ["LOCAL_RANK"] = "0"
 
-    # path
+    lr = 2e-3  # Learning Rate
+    eps = 1e-5  # when optimizing, pervent denominator be too close with zero. generally 1e-4 ~ 1e-8. adagrad.
+    betas = (0.9, 0.999)  # when optimizing, select how many past gradient used by this gradient calc. momentum.
+    weight_decay = 1e-6  # Weight Decay
+    dropout_rate = 0.4  # Dropout Rate
+    sch_step = 4000  # scheduler's Learning rate change step
+    max_iter = 300e3  # Max Iteration
+    batch_size = 16  # Batch Size
+    iters_per_log = 10  # Logging Iteration
+    iters_per_sample = 500  # Sampling Iteration
+    iters_per_ckpt = 10000  # Saving Iteration
+    grad_clip_thresh = 1.0  # Gradient clipping threshhold
+    eg_text = '타코트론 모델의 성능 확인을 위한 예시 텍스트 입니다.'  # example text
+
+    ##########
+    #  path  #
+    ##########
     default_data_path = "../data/TTS"
     default_ckpt_path = "./models/Tacotron2/ckpt/BogiHsu"
     default_log_path = "./models/Tacotron2/log"
-    last_ckpt = f"{default_ckpt_path}/ckpt_{max(int(ckpt.split('_')[1]) for ckpt in os.listdir(default_ckpt_path))}"\
+    last_ckpt = f"{default_ckpt_path}/ckpt_{max(int(ckpt.split('_')[1]) for ckpt in os.listdir(default_ckpt_path))}" \
         if os.path.exists(default_ckpt_path) and os.listdir(default_ckpt_path) else ""
-    ignore_data_dir = ["trim_k_kwunT"]
+    ignore_data_dir = ["raw", "trim_kss"]
 
-    # params
-    # model
+    ##########
+    # params #
+    ##########
+    # Vocab|Embedding
     n_symbols = len(symbols.symbols)
     symbols_embedding_dim = 512
     # Encoder parameters

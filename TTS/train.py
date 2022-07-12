@@ -11,7 +11,7 @@ import torch.distributed as dist
 from dataset import prepare_dataloaders, griffin_lim, text_to_sequence
 from model import Tacotron2, Tacotron2Loss
 from hparams import hparams as hps
-os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+os.environ["CUDA_VISIBLE_DEVICES"] = '0, 1'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 np.random.seed(hps.seed)
@@ -26,7 +26,7 @@ def load_checkpoint(ckpt_pth, model, optimizer, device):
     ckpt_dict = torch.load(ckpt_pth, map_location=device)
     (model.module if hps.distributed else model).load_state_dict(ckpt_dict['model'])
     optimizer.load_state_dict(ckpt_dict['optimizer'])
-    iteration = ckpt_dict['iteration']
+    iteration = ckpt_dict['iteration'] if not hps.is_transfer else 0
     return model, optimizer, iteration
 
 def to_arr(var) -> np.ndarray:
