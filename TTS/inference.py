@@ -11,9 +11,9 @@ from scipy.io import wavfile
 from matplotlib import font_manager, rc
 from speechbrain.pretrained import HIFIGAN
 
-from .model import Tacotron2
-from .hparams import hparams as hps
-from .dataset import text_to_sequence, griffin_lim
+from model import Tacotron2
+from hparams import hparams as hps
+from dataset import text_to_sequence, griffin_lim
 warnings.filterwarnings('ignore')
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 font_path = "C:/Windows/Fonts/malgunbd.ttf"

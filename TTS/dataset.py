@@ -13,7 +13,7 @@ import librosa
 from scipy.io import wavfile
 from librosa.util import normalize
 
-from .hparams import hparams as hps, symbols
+from hparams import hparams as hps, symbols
 
 _mel_basis = None
 _symbol_to_id = {s: i for i, s in enumerate(symbols.symbols)}

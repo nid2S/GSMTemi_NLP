@@ -3,7 +3,7 @@ from math import sqrt
 from torch import nn
 from torch.autograd import Variable
 from torch.nn import functional as F
-from .hparams import hparams as hps
+from hparams import hparams as hps
 
 def get_mask_from_lengths(lengths, pad=False) -> torch.Tensor:
     max_len = torch.max(lengths).item()
