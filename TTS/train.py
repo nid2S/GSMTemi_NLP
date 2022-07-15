@@ -11,7 +11,7 @@ import torch.distributed as dist
 from dataset import prepare_dataloaders, griffin_lim, text_to_sequence
 from model import Tacotron2, Tacotron2Loss
 from hparams import hparams as hps
-os.environ["CUDA_VISIBLE_DEVICES"] = '0, 1'
+# os.environ["CUDA_VISIBLE_DEVICES"] = '0, 1'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 np.random.seed(hps.seed)
@@ -111,7 +111,7 @@ class Tacotron2Logger(tensorboardX.SummaryWriter):
 def train(args):
     # setup env
     rank = 0
-    local_rank = 1
+    local_rank = 0
     if hps.distributed:
         dist.init_process_group(backend='nccl', rank=local_rank, world_size=hps.n_workers)
     if local_rank:

@@ -92,8 +92,8 @@ class hparams:
     #  path  #
     ##########
     default_data_path = "../data/TTS"
-    default_ckpt_path = "./models/Tacotron2/ckpt/BogiHsu"
-    default_log_path = "./models/Tacotron2/log"
+    default_ckpt_path = "./models/Tacotron2/ckpt_k"
+    default_log_path = "./models/Tacotron2/log/ckpt_k"
     last_ckpt = f"{default_ckpt_path}/ckpt_{max(int(ckpt.split('_')[1]) for ckpt in os.listdir(default_ckpt_path))}" \
         if os.path.exists(default_ckpt_path) and os.listdir(default_ckpt_path) else ""
     ignore_data_dir = ["raw", "trim_kss"]
