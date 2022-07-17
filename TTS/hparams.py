@@ -1,41 +1,152 @@
 import os
 import torch
 
+
 class symbols:
-    pad = '[PAD]'
-    eos = '</s>'
+    pad = "[PAD]"
+    eos = "</s>"
     punctuation = "!,.? "
-    alphabet = 'abcdefghijklmnopqrstuvwxyz'
-    numbers = '0123456789'
+    alphabet = "abcdefghijklmnopqrstuvwxyz"
+    numbers = "0123456789"
 
     CHO = [
-        u'ᄀ', u'ᄁ', u'ᄂ', u'ᄃ', u'ᄄ', u'ᄅ', u'ᄆ', u'ᄇ', u'ᄈ', u'ᄉ',
-        u'ᄊ', u'ᄋ', u'ᄌ', u'ᄍ', u'ᄎ', u'ᄏ', u'ᄐ', u'ᄑ', u'ᄒ'
+        "ᄀ",
+        "ᄁ",
+        "ᄂ",
+        "ᄃ",
+        "ᄄ",
+        "ᄅ",
+        "ᄆ",
+        "ᄇ",
+        "ᄈ",
+        "ᄉ",
+        "ᄊ",
+        "ᄋ",
+        "ᄌ",
+        "ᄍ",
+        "ᄎ",
+        "ᄏ",
+        "ᄐ",
+        "ᄑ",
+        "ᄒ",
     ]
     JOONG = [
-        u'ᅡ', u'ᅢ', u'ᅣ', u'ᅤ', u'ᅥ', u'ᅦ', u'ᅧ', u'ᅨ', u'ᅩ', u'ᅪ',
-        u'ᅫ', u'ᅬ', u'ᅭ', u'ᅮ', u'ᅯ', u'ᅰ', u'ᅱ', u'ᅲ', u'ᅳ', u'ᅴ', u'ᅵ',
+        "ᅡ",
+        "ᅢ",
+        "ᅣ",
+        "ᅤ",
+        "ᅥ",
+        "ᅦ",
+        "ᅧ",
+        "ᅨ",
+        "ᅩ",
+        "ᅪ",
+        "ᅫ",
+        "ᅬ",
+        "ᅭ",
+        "ᅮ",
+        "ᅯ",
+        "ᅰ",
+        "ᅱ",
+        "ᅲ",
+        "ᅳ",
+        "ᅴ",
+        "ᅵ",
     ]
     JONG = [
-        u'', u'ᆨ', u'ᆩ', u'ᆪ', u'ᆫ', u'ᆬ', u'ᆭ', u'ᆮ', u'ᆯ', u'ᆰ',
-        u'ᆱ', u'ᆲ', u'ᆳ', u'ᆴ', u'ᆵ', u'ᆶ', u'ᆷ', u'ᆸ', u'ᆹ', u'ᆺ',
-        u'ᆻ', u'ᆼ', u'ᆽ', u'ᆾ', u'ᆿ', u'ᇀ', u'ᇁ', u'ᇂ'
+        "",
+        "ᆨ",
+        "ᆩ",
+        "ᆪ",
+        "ᆫ",
+        "ᆬ",
+        "ᆭ",
+        "ᆮ",
+        "ᆯ",
+        "ᆰ",
+        "ᆱ",
+        "ᆲ",
+        "ᆳ",
+        "ᆴ",
+        "ᆵ",
+        "ᆶ",
+        "ᆷ",
+        "ᆸ",
+        "ᆹ",
+        "ᆺ",
+        "ᆻ",
+        "ᆼ",
+        "ᆽ",
+        "ᆾ",
+        "ᆿ",
+        "ᇀ",
+        "ᇁ",
+        "ᇂ",
     ]
 
     # special symbols
     convert_symbols = [("(주)", "주식회사"), ("-([0-9]+)", r"마이너스\1"), ("%", "퍼센트")]
-    special_ja = {"ㄲ": "쌍기역", "ㄸ": "쌍디귿", "ㅃ": "쌍비읍", "ㅆ": "쌍시옷", "ㅉ": "쌍지읒",
-                  "ㄳ": "기역시옷", "ㄵ": "니은지읒", "ㄶ": "니은히읗", "ㄺ": "리을기역", "ㄻ": "리을미음",
-                  "ㄼ": "리을비읍", "ㄽ": "리을시옷", "ㄾ": "리을티읕", "ㄿ": "리을피읖", "ㅀ": "리을히읗", "ㅄ": "비읍시옷"}
-    alpha_pron = {"a": "에이", "b": "비", "c": "씨", "d": "디", "e": "이", "f": "에프", "g": "쥐",
-                  "h": "에이치", "i": "아이", "j": "제이", "k": "케이", "l": "엘", "m": "엠", "n": "엔", "o": "오", "p": "피",
-                  "q": "큐", "r": "알", "s": "에스", "t": "티", "u": "유", "v": "브이", "w": "더블유", "x": "엑스", "y": "와이",
-                  "z": "지"}
+    special_ja = {
+        "ㄲ": "쌍기역",
+        "ㄸ": "쌍디귿",
+        "ㅃ": "쌍비읍",
+        "ㅆ": "쌍시옷",
+        "ㅉ": "쌍지읒",
+        "ㄳ": "기역시옷",
+        "ㄵ": "니은지읒",
+        "ㄶ": "니은히읗",
+        "ㄺ": "리을기역",
+        "ㄻ": "리을미음",
+        "ㄼ": "리을비읍",
+        "ㄽ": "리을시옷",
+        "ㄾ": "리을티읕",
+        "ㄿ": "리을피읖",
+        "ㅀ": "리을히읗",
+        "ㅄ": "비읍시옷",
+    }
+    alpha_pron = {
+        "a": "에이",
+        "b": "비",
+        "c": "씨",
+        "d": "디",
+        "e": "이",
+        "f": "에프",
+        "g": "쥐",
+        "h": "에이치",
+        "i": "아이",
+        "j": "제이",
+        "k": "케이",
+        "l": "엘",
+        "m": "엠",
+        "n": "엔",
+        "o": "오",
+        "p": "피",
+        "q": "큐",
+        "r": "알",
+        "s": "에스",
+        "t": "티",
+        "u": "유",
+        "v": "브이",
+        "w": "더블유",
+        "x": "엑스",
+        "y": "와이",
+        "z": "지",
+    }
     number_of_digits = ["십", "백", "천", "만", "억", "조", "경", "해"]
     digits = ["영", "일", "이", "삼", "사", "오", "육", "칠", "팔", "구"]
 
     # Export all symbols:
-    symbols = [pad] + [eos] + CHO + JOONG + JONG[1:] + list(alphabet) + list(numbers) + list(punctuation)
+    symbols = (
+        [pad]
+        + [eos]
+        + CHO
+        + JOONG
+        + JONG[1:]
+        + list(alphabet)
+        + list(numbers)
+        + list(punctuation)
+    )
+
 
 class hparams:
     seed = 7777
@@ -76,7 +187,10 @@ class hparams:
 
     lr = 2e-3  # Learning Rate
     eps = 1e-5  # when optimizing, pervent denominator be too close with zero. generally 1e-4 ~ 1e-8. adagrad.
-    betas = (0.9, 0.999)  # when optimizing, select how many past gradient used by this gradient calc. momentum.
+    betas = (
+        0.9,
+        0.999,
+    )  # when optimizing, select how many past gradient used by this gradient calc. momentum.
     weight_decay = 1e-6  # Weight Decay
     dropout_rate = 0.4  # Dropout Rate
     sch_step = 4000  # scheduler's Learning rate change step
@@ -86,7 +200,7 @@ class hparams:
     iters_per_sample = 500  # Sampling Iteration
     iters_per_ckpt = 10000  # Saving Iteration
     grad_clip_thresh = 1.0  # Gradient clipping threshhold
-    eg_text = '타코트론 모델의 성능 확인을 위한 예시 텍스트 입니다.'  # example text
+    eg_text = "타코트론 모델의 성능 확인을 위한 예시 텍스트 입니다."  # example text
 
     ##########
     #  path  #
@@ -94,8 +208,11 @@ class hparams:
     default_data_path = "../data/TTS"
     default_ckpt_path = "./models/Tacotron2/ckpt/BogiHsu"
     default_log_path = "./models/Tacotron2/log"
-    last_ckpt = f"{default_ckpt_path}/ckpt_{max(int(ckpt.split('_')[1]) for ckpt in os.listdir(default_ckpt_path))}" \
-        if os.path.exists(default_ckpt_path) and os.listdir(default_ckpt_path) else ""
+    last_ckpt = (
+        f"{default_ckpt_path}/ckpt_{max(int(ckpt.split('_')[1]) for ckpt in os.listdir(default_ckpt_path))}"
+        if os.path.exists(default_ckpt_path) and os.listdir(default_ckpt_path)
+        else ""
+    )
     ignore_data_dir = ["raw", "trim_kss"]
 
     ##########

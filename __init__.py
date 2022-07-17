@@ -7,10 +7,13 @@ from chatbot.chatbot import ChatBot
 synthesizer = Synthesizer("./TTS/models/Tacotron2/ckpt_300000", "./TTS/models/hifigan/")
 chatbot = ChatBot([])
 
-def synthesize(text: str,
-               wav_path: Optional[str] = "./res/res_wav.wav",
-               plot_path: Optional[str] = "./res/res_plot.png",
-               play_audio: bool = False) -> Tuple[ndarray, int, float]:
+
+def synthesize(
+    text: str,
+    wav_path: Optional[str] = "./res/res_wav.wav",
+    plot_path: Optional[str] = "./res/res_plot.png",
+    play_audio: bool = False,
+) -> Tuple[ndarray, int, float]:
     """
     synthesize audio from input text.\n
     if input text includes non-korean(likes number, english, etc)text, that text will be change to korean or disappear.

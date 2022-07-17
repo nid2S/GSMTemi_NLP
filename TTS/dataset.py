@@ -29,7 +29,10 @@ def get_number_of_digits(i: int) -> str:
     elif i % 4 == 0:
         num_of_digits = symbols.number_of_digits[(i // 4) + 2]
     else:
-        num_of_digits = symbols.number_of_digits[(i % 4) - 1] + symbols.number_of_digits[(i // 4) + 2]
+        num_of_digits = (
+            symbols.number_of_digits[(i % 4) - 1]
+            + symbols.number_of_digits[(i // 4) + 2]
+        )
 
     return num_of_digits
 
@@ -84,12 +87,14 @@ def decompose_hangul(sent: str) -> List[str]:
             # res.append(symbols.JOONG[char_id // 28 % 21])
             # if char_id % 28 != 0:
             #     res.append(symbols.JONG[char_id % 28])
-            res += [jamo for jamo in unicodedata.normalize('NFKD', c)]
+            res += [jamo for jamo in unicodedata.normalize("NFKD", c)]
     return res
 
 
 # text sequencing functions
-def prep_text(text: str, conv_alpha: bool = False, conv_number: bool = False) -> List[str]:
+def prep_text(
+    text: str, conv_alpha: bool = False, conv_number: bool = False
+) -> List[str]:
     # lower -> change special words -> convert alphabet(optional) -> remove white space
     # -> remove non-eng/num/hangle/punc char -> convert number -> decompose hangle
     text = text.lower().strip()
@@ -120,23 +125,46 @@ def sequence_to_text(sequence) -> str:
 def prepare_dataloaders(data_dir: str, n_gpu: int) -> torch.utils.data.DataLoader:
     trainset = audio_dataset(data_dir)
     collate_fn = audio_collate(hps.n_frames_per_step)
-    sampler = DistributedSampler(trainset) if n_gpu > 1 and torch.cuda.is_available() else None
-    train_loader = DataLoader(trainset, num_workers=hps.n_workers, shuffle=n_gpu == 1,
-                              batch_size=hps.batch_size, pin_memory=hps.pin_mem,
-                              drop_last=True, collate_fn=collate_fn, sampler=sampler)
+    sampler = (
+        DistributedSampler(trainset)
+        if n_gpu > 1 and torch.cuda.is_available()
+        else None
+    )
+    train_loader = DataLoader(
+        trainset,
+        num_workers=hps.n_workers,
+        shuffle=n_gpu == 1,
+        batch_size=hps.batch_size,
+        pin_memory=hps.pin_mem,
+        drop_last=True,
+        collate_fn=collate_fn,
+        sampler=sampler,
+    )
     return train_loader
 
 
 # datasets
 def _build_mel_basis():
     n_fft = (hps.num_freq - 1) * 2
-    return librosa.filters.mel(hps.sample_rate, n_fft, n_mels=hps.num_mels, fmin=hps.fmin, fmax=hps.fmax)
+    return librosa.filters.mel(
+        hps.sample_rate, n_fft, n_mels=hps.num_mels, fmin=hps.fmin, fmax=hps.fmax
+    )
 
 
 def melspectrogram(y):
     # _stft(y)
-    n_fft, hop_length, win_length = (hps.num_freq - 1) * 2, hps.frame_shift, hps.frame_length
-    D = librosa.stft(y=y, n_fft=n_fft, hop_length=hop_length, win_length=win_length, pad_mode='reflect')
+    n_fft, hop_length, win_length = (
+        (hps.num_freq - 1) * 2,
+        hps.frame_shift,
+        hps.frame_length,
+    )
+    D = librosa.stft(
+        y=y,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        win_length=win_length,
+        pad_mode="reflect",
+    )
 
     # _amp_to_db(_linear_to_mel(np.abs(D)))
     global _mel_basis
@@ -158,14 +186,26 @@ def griffin_lim(mel):
     S = np.maximum(1e-10, inverse)
 
     # _griffin_lim(S ** hps.power)
-    n_fft, hop_length, win_length = (hps.num_freq - 1) * 2, hps.frame_shift, hps.frame_length
+    n_fft, hop_length, win_length = (
+        (hps.num_freq - 1) * 2,
+        hps.frame_shift,
+        hps.frame_length,
+    )
     angles = np.exp(2j * np.pi * np.random.rand(*S.shape))
     S_complex = np.abs(S).astype(np.complex)
     y = librosa.istft(S_complex * angles, hop_length=hop_length, win_length=win_length)
     for i in range(hps.gl_iters):
-        stft = librosa.stft(y=y, n_fft=n_fft, hop_length=hop_length, win_length=win_length, pad_mode='reflect')
+        stft = librosa.stft(
+            y=y,
+            n_fft=n_fft,
+            hop_length=hop_length,
+            win_length=win_length,
+            pad_mode="reflect",
+        )
         angles = np.exp(1j * np.angle(stft))
-        y = librosa.istft(S_complex * angles, hop_length=hop_length, win_length=win_length)
+        y = librosa.istft(
+            S_complex * angles, hop_length=hop_length, win_length=win_length
+        )
     return np.clip(y, a_max=1, a_min=-1)
 
 
@@ -189,13 +229,17 @@ def get_mel_text_pair(text, wav_path):
 def files_to_list(fdir):
     f_list = []
     for data_dir in os.listdir(fdir):
-        if data_dir in hps.ignore_data_dir or \
-                not os.path.exists(os.path.join(fdir, data_dir, 'transcript.txt')) or \
-                not os.path.isdir(os.path.join(fdir, data_dir)):
+        if (
+            data_dir in hps.ignore_data_dir
+            or not os.path.exists(os.path.join(fdir, data_dir, "transcript.txt"))
+            or not os.path.isdir(os.path.join(fdir, data_dir))
+        ):
             continue
-        with open(os.path.join(fdir, data_dir, 'transcript.txt'), encoding='utf-8') as f:
+        with open(
+            os.path.join(fdir, data_dir, "transcript.txt"), encoding="utf-8"
+        ) as f:
             for line in tqdm(f, desc=f"loading data from {data_dir}"):
-                parts = line.strip().split('|')
+                parts = line.strip().split("|")
                 wav_path = os.path.join(fdir, data_dir, parts[0])
                 if hps.prep:
                     f_list.append(get_mel_text_pair(parts[1], wav_path))
@@ -211,7 +255,9 @@ class audio_dataset(Dataset):
         self.f_list = files_to_list(fdir)
 
     def __getitem__(self, index):
-        text, mel = self.f_list[index] if hps.prep else get_mel_text_pair(*self.f_list[index])
+        text, mel = (
+            self.f_list[index] if hps.prep else get_mel_text_pair(*self.f_list[index])
+        )
         return text, mel
 
     def __len__(self):
@@ -224,20 +270,24 @@ class audio_collate:
 
     def __call__(self, batch):
         # Right zero-pad all one-hot text sequences to max input length
-        input_lengths, ids_sorted_decreasing = torch.sort(torch.LongTensor([len(x[0]) for x in batch]), dim=0, descending=True)
+        input_lengths, ids_sorted_decreasing = torch.sort(
+            torch.LongTensor([len(x[0]) for x in batch]), dim=0, descending=True
+        )
         max_input_len = input_lengths[0]
 
         text_padded = torch.LongTensor(len(batch), max_input_len)
         text_padded.zero_()
         for i in range(len(ids_sorted_decreasing)):
             text = batch[ids_sorted_decreasing[i]][0]
-            text_padded[i, :text.size(0)] = text
+            text_padded[i, : text.size(0)] = text
 
         # Right zero-pad mel-spec
         num_mels = batch[0][1].size(0)
         max_target_len = max([x[1].size(1) for x in batch])
         if max_target_len % self.n_frames_per_step != 0:
-            max_target_len += self.n_frames_per_step - max_target_len % self.n_frames_per_step
+            max_target_len += (
+                self.n_frames_per_step - max_target_len % self.n_frames_per_step
+            )
             assert max_target_len % self.n_frames_per_step == 0
 
         # include mel padded and gate padded
@@ -248,8 +298,8 @@ class audio_collate:
         output_lengths = torch.LongTensor(len(batch))
         for i in range(len(ids_sorted_decreasing)):
             mel = batch[ids_sorted_decreasing[i]][1]
-            mel_padded[i, :, :mel.size(1)] = mel
-            gate_padded[i, mel.size(1) - 1:] = 1
+            mel_padded[i, :, : mel.size(1)] = mel
+            gate_padded[i, mel.size(1) - 1 :] = 1
             output_lengths[i] = mel.size(1)
 
         return text_padded, input_lengths, mel_padded, gate_padded, output_lengths

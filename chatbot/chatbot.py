@@ -2,7 +2,9 @@ from transformers import PreTrainedTokenizerFast
 from typing import List
 import random
 import torch
+
 random.seed(7777)
+
 
 class ChatBot:
     """
@@ -22,7 +24,9 @@ class ChatBot:
         self.unknown_answer = "죄송합니다. 질문을 잘 모르겠어요. 다시 질문해주세요."
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.compress_tokenizer = PreTrainedTokenizerFast.from_pretrained("./tokenizer", use_cache=True)
+        self.compress_tokenizer = PreTrainedTokenizerFast.from_pretrained(
+            "./tokenizer", use_cache=True
+        )
         self.compress_model = torch.nn.Embedding(51200, 768).to(self.device)
         self.compress_model.load_state_dict(torch.load("./embedding_model_state.pt"))
 
@@ -130,7 +134,13 @@ class ChatBot:
         return torch.cosine_similarity(v1, v2).item()
 
     def _encoding_question(self, ques: str) -> torch.FloatTensor:
-        encoded_ques = self.compress_tokenizer.encode(ques, return_tensors="pt")  # (1, token_num)
-        embedding_vector = self.compress_model(encoded_ques)  # (1, token_num, embedding_dim(768))
-        embedding_vector = torch.mean(embedding_vector, dim=1).squeeze()  # (embedding_dim)
+        encoded_ques = self.compress_tokenizer.encode(
+            ques, return_tensors="pt"
+        )  # (1, token_num)
+        embedding_vector = self.compress_model(
+            encoded_ques
+        )  # (1, token_num, embedding_dim(768))
+        embedding_vector = torch.mean(
+            embedding_vector, dim=1
+        ).squeeze()  # (embedding_dim)
         return embedding_vector

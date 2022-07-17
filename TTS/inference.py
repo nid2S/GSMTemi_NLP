@@ -11,14 +11,16 @@ from scipy.io import wavfile
 from matplotlib import font_manager, rc
 from speechbrain.pretrained import HIFIGAN
 
-from model import Tacotron2
+from .models import Tacotron2
 from hparams import hparams as hps
 from dataset import text_to_sequence, griffin_lim
-warnings.filterwarnings('ignore')
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+warnings.filterwarnings("ignore")
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 font_path = "C:/Windows/Fonts/malgunbd.ttf"
 font = font_manager.FontProperties(fname=font_path).get_name()
-rc('font', family=font)
+rc("font", family=font)
+
 
 class Synthesizer:
     def __init__(self, tacotron_check, vocoder_dir):
@@ -36,7 +38,9 @@ class Synthesizer:
 
         self.tacotron = Tacotron2()
         self.tacotron = self.load_model(tacotron_check, self.tacotron)
-        self.hifi_gan = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-ljspeech", savedir=vocoder_dir)
+        self.hifi_gan = HIFIGAN.from_hparams(
+            source="speechbrain/tts-hifigan-ljspeech", savedir=vocoder_dir
+        )
         if torch.cuda.is_available():
             self.tacotron.cuda()
             self.hifi_gan.cuda()
@@ -56,7 +60,9 @@ class Synthesizer:
         start = time.perf_counter()
         sequence = text_to_sequence(text)
         sequence = torch.IntTensor(sequence)[None, :].to(hps.device).long()
-        mel_outputs, mel_outputs_postnet, _, alignments = self.tacotron.inference(sequence)
+        mel_outputs, mel_outputs_postnet, _, alignments = self.tacotron.inference(
+            sequence
+        )
         self.outputMel = (mel_outputs, mel_outputs_postnet, alignments)
 
         if use_griffin_lim:
@@ -70,7 +76,7 @@ class Synthesizer:
 
         end = time.perf_counter()
         print(f"synthesize text duration : {end-start:.2f}sec.")
-        return audio, self.sampling_rate, end-start
+        return audio, self.sampling_rate, end - start
 
     def save_plot(self, pth):
         """
@@ -120,21 +126,25 @@ class Synthesizer:
             ckpt_dict = torch.load(ckpt_pth, map_location=torch.device("cpu"))
 
         if isinstance(model, Tacotron2):
-            model.load_state_dict(ckpt_dict['model'])
+            model.load_state_dict(ckpt_dict["model"])
         else:
-            model.load_state_dict(ckpt_dict['model'].state_dict())
+            model.load_state_dict(ckpt_dict["model"].state_dict())
 
         model = model.to(hps.device, non_blocking=True).eval()
         return model
 
     def plot_data(self, data, text, figsize=(16, 4)):
-        data_order = ["melspectrogram", "melspectorgram_with_postnet", "attention_alignments"]
+        data_order = [
+            "melspectrogram",
+            "melspectorgram_with_postnet",
+            "attention_alignments",
+        ]
         fig, axes = plt.subplots(1, len(data), figsize=figsize)
         fig.suptitle(text)
         for i in range(len(data)):
             if data_order[i] == "attention_alignments":
                 data[i] = data[i].T
-            axes[i].imshow(data[i], aspect='auto', origin='lower')
+            axes[i].imshow(data[i], aspect="auto", origin="lower")
             axes[i].set_title(data_order[i])
             if data_order[i] == "attention_alignments":
                 axes[i].set_xlabel("Decoder TimeStep")
@@ -147,11 +157,13 @@ class Synthesizer:
         return var.cpu().detach().numpy().astype(np.float32)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     path = "../res"
     g_text = "주문을 도와드릴 에이아이 챗봇 입니다."
-    title = re.sub('\W', ' ', g_text).strip().replace(' ', '_')
-    synthesizer = Synthesizer("./models/Tacotron2/ckpt_300000", "../models/TTS/hifigan/")
+    title = re.sub("\W", " ", g_text).strip().replace(" ", "_")
+    synthesizer = Synthesizer(
+        "./models/Tacotron2/ckpt_300000", "../models/TTS/hifigan/"
+    )
     g_audio, _, _ = synthesizer.synthesize(g_text)
     synthesizer.save_plot("../res/res.png")
     synthesizer.save_wave(f"{path}/{title}.wav", g_audio)
