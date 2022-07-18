@@ -55,10 +55,8 @@ class ChatBot:
         best_similarity = self.condition_of_similarity
         answer = self.unknown_answer
 
-        for _, a, question_vector in self.QandA_of_place:
-            turn_similarity = self._get_cosine_similarity(
-                question_vector, user_question
-            )
+        for _, a, question_vector, _ in self.QandA_of_place:
+            turn_similarity = self._get_cosine_similarity(question_vector.cpu(), user_question.cpu())
             if turn_similarity > best_similarity:
                 best_similarity = turn_similarity
                 answer = a
@@ -132,7 +130,7 @@ class ChatBot:
         return torch.cosine_similarity(v1, v2).item()
 
     def _encoding_question(self, ques: str) -> torch.FloatTensor:
-        encoded_ques = self.compress_tokenizer.encode(ques, return_tensors="pt")  # (1, token_num)
+        encoded_ques = self.compress_tokenizer.encode(ques, return_tensors="pt").to(self.device)  # (1, token_num)
         embedding_vector = self.compress_model(encoded_ques)  # (1, token_num, embedding_dim(768))
         embedding_vector = torch.mean(embedding_vector, dim=1).squeeze()  # (embedding_dim)
         return embedding_vector

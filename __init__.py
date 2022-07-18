@@ -42,7 +42,7 @@ def synthesize(
 
 def read_data_from_csv(file_path: str) -> List:
     data = pd.read_csv(file_path, header=0).dropna()
-    return [[Q, A, chatbot._encoding_question(Q), place] for (Q, A, place) in data.iterrows()]
+    return [[Q, A, chatbot._encoding_question(Q), place] for i, (Q, A, place) in data.iterrows()]
 
 def chat():
     chatbot.setDiffrentQnA(read_data_from_csv("./data/chatbot/Temi_Chatbot_dataset.csv"))
@@ -60,4 +60,4 @@ def chat():
 
 
 if __name__ == '__main__':
-    synthesize("에이아이 서비스의 티티에스 모델입니다.")
+    chat()
