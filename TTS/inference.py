@@ -36,11 +36,9 @@ class Synthesizer:
         self.sampling_rate = hps.sample_rate
 
         self.tacotron = Tacotron2()
-        self.tacotron = self.load_model(tacotron_check, self.tacotron)
-        self.hifi_gan = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-ljspeech", savedir=vocoder_dir)
-        if torch.cuda.is_available():
-            self.tacotron.cuda()
-            self.hifi_gan.cuda()
+        self.tacotron = self.load_model(tacotron_check, self.tacotron).to(hps.device)
+        # self.hifi_gan = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-ljspeech", savedir=vocoder_dir).to(hps.device)
+        self.hifi_gan = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-ljspeech", savedir=vocoder_dir).to("cpu")
         self.tacotron.eval()
         self.hifi_gan.eval()
 

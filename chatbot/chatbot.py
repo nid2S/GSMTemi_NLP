@@ -123,7 +123,7 @@ class ChatBot:
         assert place_id in self.place_range, "place id has to include in place range"
         self.QandA_of_place = filter(lambda x: x[3] in [place_id, -1], self.QandA)
 
-    def setDiffrentQnA(self, QnA: List[str]):
+    def setDiffrentQnA(self, QnA: List):
         self.QandA = QnA
 
     def _get_cosine_similarity(self, v1: List[float], v2: List[float]) -> float:
