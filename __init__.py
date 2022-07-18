@@ -1,5 +1,6 @@
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 from numpy import ndarray
+import pandas as pd
 
 from TTS.inference import Synthesizer
 from chatbot.chatbot import ChatBot
@@ -38,6 +39,24 @@ def synthesize(
     if play_audio:
         synthesizer.play_audio(audio)
     return audio, sr, duration
+
+def read_data_from_csv(file_path: str) -> List:
+    data = pd.read_csv(file_path, header=0).dropna()
+    return [[Q, A, chatbot._encoding_question(Q), place] for (Q, A, place) in data.iterrows()]
+
+def chat():
+    chatbot.setDiffrentQnA(read_data_from_csv("./data/chatbot/Temi_Chatbot_dataset.csv"))
+    chatbot.setPlace(-1)
+    while True:
+        user_text = input("유저 입력 : ")
+        if user_text == "종료":
+            break
+        if user_text.split()[0] == "장소변경":
+            chatbot.setPlace(int(user_text.split()[1]))
+            continue
+        bot_answer = chatbot.question(user_text)
+        print("봇 응답 : "+bot_answer)
+        synthesize(bot_answer, wav_path=None, plot_path=None, play_audio=True)
 
 
 if __name__ == '__main__':
