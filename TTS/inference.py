@@ -18,7 +18,8 @@ warnings.filterwarnings('ignore')
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 font_path = "C:/Windows/Fonts/malgunbd.ttf"
 font = font_manager.FontProperties(fname=font_path).get_name()
-rc('font', family=font)
+rc("font", family=font)
+
 
 class Synthesizer:
     def __init__(self, tacotron_check, vocoder_dir):
@@ -70,7 +71,7 @@ class Synthesizer:
 
         end = time.perf_counter()
         print(f"synthesize text duration : {end-start:.2f}sec.")
-        return audio, self.sampling_rate, end-start
+        return audio, self.sampling_rate, end - start
 
     def save_plot(self, pth):
         """
@@ -120,9 +121,9 @@ class Synthesizer:
             ckpt_dict = torch.load(ckpt_pth, map_location=torch.device("cpu"))
 
         if isinstance(model, Tacotron2):
-            model.load_state_dict(ckpt_dict['model'])
+            model.load_state_dict(ckpt_dict["model"])
         else:
-            model.load_state_dict(ckpt_dict['model'].state_dict())
+            model.load_state_dict(ckpt_dict["model"].state_dict())
 
         model = model.to(hps.device, non_blocking=True).eval()
         return model
@@ -134,7 +135,7 @@ class Synthesizer:
         for i in range(len(data)):
             if data_order[i] == "attention_alignments":
                 data[i] = data[i].T
-            axes[i].imshow(data[i], aspect='auto', origin='lower')
+            axes[i].imshow(data[i], aspect="auto", origin="lower")
             axes[i].set_title(data_order[i])
             if data_order[i] == "attention_alignments":
                 axes[i].set_xlabel("Decoder TimeStep")
@@ -147,11 +148,11 @@ class Synthesizer:
         return var.cpu().detach().numpy().astype(np.float32)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     path = "../res"
     g_text = "주문을 도와드릴 에이아이 챗봇 입니다."
     title = re.sub('\W', ' ', g_text).strip().replace(' ', '_')
-    synthesizer = Synthesizer("./models/Tacotron2/ckpt_300000", "./models/TTS/hifigan/")
+    synthesizer = Synthesizer("./models/Tacotron2/ckpt_300000", "../models/TTS/hifigan/")
     g_audio, _, _ = synthesizer.synthesize(g_text)
     synthesizer.save_plot(f"{path}/res.png")
     synthesizer.save_wave(f"{path}/{title}.wav", g_audio)

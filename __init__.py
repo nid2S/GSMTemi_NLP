@@ -1,16 +1,19 @@
 from typing import Optional, Tuple
 from numpy import ndarray
 
-from TTS.inference import Synthesizer
+from .TTS.inference import Synthesizer
 from chatbot.chatbot import ChatBot
 
 synthesizer = Synthesizer("./TTS/models/Tacotron2/ckpt_300000", "./TTS/models/hifigan/")
 chatbot = ChatBot([], tokenizer_path="./chatbot/tokenizer", embedding_model_path="./chatbot/models/embedding_model_state.pt")
 
-def synthesize(text: str,
-               wav_path: Optional[str] = "./res/res_wav.wav",
-               plot_path: Optional[str] = "./res/res_plot.png",
-               play_audio: bool = False) -> Tuple[ndarray, int, float]:
+
+def synthesize(
+    text: str,
+    wav_path: Optional[str] = "./res/res_wav.wav",
+    plot_path: Optional[str] = "./res/res_plot.png",
+    play_audio: bool = False,
+) -> Tuple[ndarray, int, float]:
     """
     synthesize audio from input text.\n
     if input text includes non-korean(likes number, english, etc)text, that text will be change to korean or disappear.

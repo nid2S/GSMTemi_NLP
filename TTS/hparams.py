@@ -1,12 +1,13 @@
 import os
 import torch
 
+
 class symbols:
-    pad = '[PAD]'
-    eos = '</s>'
+    pad = "[PAD]"
+    eos = "</s>"
     punctuation = "!,.? "
-    alphabet = 'abcdefghijklmnopqrstuvwxyz'
-    numbers = '0123456789'
+    alphabet = "abcdefghijklmnopqrstuvwxyz"
+    numbers = "0123456789"
 
     CHO = [
         u'ᄀ', u'ᄁ', u'ᄂ', u'ᄃ', u'ᄄ', u'ᄅ', u'ᄆ', u'ᄇ', u'ᄈ', u'ᄉ',
@@ -86,7 +87,7 @@ class hparams:
     iters_per_sample = 500  # Sampling Iteration
     iters_per_ckpt = 10000  # Saving Iteration
     grad_clip_thresh = 1.0  # Gradient clipping threshhold
-    eg_text = '타코트론 모델의 성능 확인을 위한 예시 텍스트 입니다.'  # example text
+    eg_text = "타코트론 모델의 성능 확인을 위한 예시 텍스트 입니다."  # example text
 
     ##########
     #  path  #

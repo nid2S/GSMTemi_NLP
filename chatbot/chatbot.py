@@ -2,7 +2,9 @@ from transformers import PreTrainedTokenizerFast
 from typing import List
 import random
 import torch
+
 random.seed(7777)
+
 
 class ChatBot:
     """
