@@ -10,7 +10,7 @@ import torch.distributed as dist
 
 from dataset import prepare_dataloaders, griffin_lim, text_to_sequence
 from model import Tacotron2, Tacotron2Loss
-from hparams import hparams as hps
+from .hparams import hparams as hps
 # os.environ["CUDA_VISIBLE_DEVICES"] = '0, 1'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 

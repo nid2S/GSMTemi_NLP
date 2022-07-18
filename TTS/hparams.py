@@ -60,7 +60,7 @@ class hparams:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     n_workers = torch.cuda.device_count() if torch.cuda.is_available() else 2
 
-    is_transfer = True
+    is_transfer = False
     pin_mem = True
     prep = True
     sch = True

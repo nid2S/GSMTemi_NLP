@@ -12,7 +12,7 @@ class ChatBot:
                  The dataset consists of Question[str], Answer[str], Vector of Quetion[List[float]], place_id[int].
     """
 
-    def __init__(self, QandA: List):
+    def __init__(self, QandA: List, tokenizer_path="./tokenizer", embedding_model_path="./models/embedding_model_state.pt"):
         self.QandA = QandA
         self.QandA_of_place = None
         self.pre_questions = None
@@ -22,9 +22,9 @@ class ChatBot:
         self.unknown_answer = "죄송합니다. 질문을 잘 모르겠어요. 다시 질문해주세요."
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.compress_tokenizer = PreTrainedTokenizerFast.from_pretrained("./tokenizer", use_cache=True)
+        self.compress_tokenizer = PreTrainedTokenizerFast.from_pretrained(tokenizer_path, use_cache=True)
         self.compress_model = torch.nn.Embedding(51200, 768).to(self.device)
-        self.compress_model.load_state_dict(torch.load("./embedding_model_state.pt"))
+        self.compress_model.load_state_dict(torch.load(embedding_model_path))
 
     def question(self, user_question: str) -> str:
         """

@@ -5,7 +5,7 @@ from TTS.inference import Synthesizer
 from chatbot.chatbot import ChatBot
 
 synthesizer = Synthesizer("./TTS/models/Tacotron2/ckpt_300000", "./TTS/models/hifigan/")
-chatbot = ChatBot([])
+chatbot = ChatBot([], tokenizer_path="./chatbot/tokenizer", embedding_model_path="./chatbot/models/embedding_model_state.pt")
 
 def synthesize(text: str,
                wav_path: Optional[str] = "./res/res_wav.wav",
@@ -35,3 +35,7 @@ def synthesize(text: str,
     if play_audio:
         synthesizer.play_audio(audio)
     return audio, sr, duration
+
+
+if __name__ == '__main__':
+    synthesize("에이아이 서비스의 티티에스 모델입니다.")
