@@ -1,7 +1,7 @@
 # AGO
 - project "AGO" NLP Repository.
 - made TTS model and Chatbot model.
-- TTS : Single-Speaker Tacotron2 + hifi-gan vocoder
+- TTS : Single-Speaker Tacotron2 + hifi-gan vocoder | changed from Multi-Speaker Tacotron2
 - Chatbot : simple searching based chatbot(using cosine similarity)
 
 # Reference
